@@ -48,11 +48,11 @@ function trace<T>(x:Lazy<T>, message: string):Lazy<T> {
         return x()
     }
 }
-console.log("lazy and(f,f):\t", and(() => false, () => false)())
+/*console.log("lazy and(f,f):\t", and(() => false, () => false)())
 console.log("lazy and(f,t):\t", and(() => false, () => true)())
 console.log("lazy and(t,f):\t", and(() => true, () => false)())
 console.log("lazy and(t,t):\t", and(() => true, () => true)())
-
+*/
 
 console.log("-- trace --")
 console.log("lazy and(f,f):\t", and(trace(() => false, "L"), trace(() => false, "R"))())
@@ -62,7 +62,7 @@ console.log("lazy and(t,t):\t", and(trace(() => true, "L"), trace(() => true, "R
 
 
 function or(a: Lazy<boolean>, b: Lazy<boolean>): Lazy<boolean> {
-    return a() == false ? b : () => true
+    return a() ? () => true : b
 }
 
 console.log("--")
@@ -72,3 +72,46 @@ console.log("lazy or(t,f):\t", or(() => true, () => false)())
 console.log("lazy or(t,t):\t", or(() => true, () => true)())
 
 
+// infinite data structures 
+type LazyList<T> = Lazy<{head: Lazy<T>, tail: LazyList<T>} | null>
+function toList<T>(xs: T[]): LazyList<T> {
+    return () => {
+        if (xs.length == 0) {
+            return null
+        }
+        return {
+            head: () => xs[0], 
+            tail: toList(xs.slice(1))
+        }
+    }
+       
+}
+console.log('infinite data strucutres') 
+console.log(toList([1,2,3])().head())
+console.log(toList([1,2,3])().tail().head())
+console.log(toList([1,2,3])().tail().tail().head())
+console.log(toList([1,2,3])().tail().tail().tail())
+
+// will reach stack overflow
+function range(begin: Lazy<number>): LazyList<number> {
+    return () => {
+        return {
+            head: begin, 
+            tail: range(() => begin() +1)
+        }
+    }
+}
+console.log('range')
+console.log(range(() => 1)().tail().tail().head())
+
+function printLazyList<T>(xs: LazyList<T>) {
+    let pair = xs() 
+    while (pair != null) {
+        console.log(pair.head());
+        pair = pair.tail()
+    }
+}
+
+console.log('--printlazylist')
+printLazyList(toList([1,2,3]))
+printLazyList(range(() => 10))
