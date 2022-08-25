@@ -39,6 +39,7 @@ console.log("Lazy First:\t", lazyFirst(() => 10,() => hand())())
 //false && x => false 
 //true || y => true 
 function and(a: Lazy<boolean>, b: Lazy<boolean>): Lazy<boolean> {
+    return a() == false ? () => false : b //
     if (a() == false) {
         return () => false 
     } else {
