@@ -51,13 +51,7 @@ console.log("lazy and(t,f):\t", and(() => true, () => false)())
 console.log("lazy and(t,t):\t", and(() => true, () => true)())
 
 function or(a: Lazy<boolean>, b: Lazy<boolean>): Lazy<boolean> {
-    if (a() == true) {
-        return () => true 
-    }
-    if (b()== true) {
-        return () => true 
-    }
-    return () => false 
+    return a() == false ? b : () => true
 }
 
 console.log("lazy or(f,f):\t", or(() => false, () => false)())
