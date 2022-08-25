@@ -93,11 +93,20 @@ console.log(toList([1,2,3])().tail().tail().head())
 console.log(toList([1,2,3])().tail().tail().tail())
 
 // will reach stack overflow
-function range(begin: Lazy<number>): LazyList<number> {
+function stackOverflowRange(begin: Lazy<number>): LazyList<number> {
     return () => {
         return {
             head: begin, 
-            tail: range(() => begin() +1)
+            tail: stackOverflowRange(() => begin() +1)
+        }
+    }
+}
+function range(begin: Lazy<number>): LazyList<number> {
+    return () => {
+        let x = begin() 
+        return {
+            head: () => x, 
+            tail: range(() => x + 1)
         }
     }
 }
@@ -114,4 +123,65 @@ function printLazyList<T>(xs: LazyList<T>) {
 
 console.log('--printlazylist')
 printLazyList(toList([1,2,3]))
-printLazyList(range(() => 10))
+//printLazyList(range(() => 10))
+
+// finite sub stracutre of ininite data structure can still terminate 
+
+function take<T>(n: Lazy<number>, xs: LazyList<T>): LazyList<T> {
+    return () => {
+        let m = n() 
+        let pair = xs() 
+        if (m <= 0) {
+            return null 
+        } 
+        return {
+            head: pair.head, 
+            tail: take(() => m-1, pair.tail)
+        }
+
+    }
+}
+console.log('take 5 <| range 10:')
+printLazyList(take(() => 5, range(() => 10)))
+
+function filter<T>(f: (a: T) => boolean, xs: LazyList<T>) : LazyList<T> {
+
+    return () => {
+        let pair = xs() 
+        if (pair === null) {
+            return null 
+        }
+        let x = pair.head() 
+        if (f(x)) {
+            return {
+                head: () => x, 
+                tail: filter(f, pair.tail)
+            }
+        } 
+        return filter(f, pair.tail)()
+    }
+}
+printLazyList(filter((x: number) => x%2===0, 
+                     take(() => 100, 
+                          range(() => 1))))
+
+
+console.log('--filter prime numbers') 
+function sieve(xs: LazyList<number>): LazyList<number> {
+    return () => {
+        let pair = xs() 
+        if (pair === null) {
+            return null
+        }
+        let y = pair.head() 
+        return {head: () => y, tail: sieve(filter(x => x%y!==0, pair.tail))}
+    }
+}
+
+
+let prime = sieve(range(() => 2))
+printLazyList(take(() => 1000, prime))
+
+
+
+
